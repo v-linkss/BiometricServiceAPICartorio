@@ -26,10 +26,10 @@ namespace BiometricService.Controllers
             return _biometric.IdentifyOneOnOne(template);
         }
 
-        [HttpGet("identification")]
-        public IActionResult Identification()
+        [HttpGet("capture-finger")]
+        public IActionResult CaptureFinger()
         {
-            return _biometric.Identification();
+            return _biometric.CaptureFinger();
         }
 
         [HttpPost("load-to-memory")]

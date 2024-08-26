@@ -91,11 +91,14 @@ public class Biometric
         );
     }
 
-    public IActionResult Identification()
+    public IActionResult CaptureFinger()
     {
         APIServiceInstance._NBioAPI.OpenDevice(NBioAPI.Type.DEVICE_ID.AUTO);
+
+        // Captura a impressão digital
         uint ret = APIServiceInstance._NBioAPI.Capture(NBioAPI.Type.FIR_PURPOSE.VERIFY, out NBioAPI.Type.HFIR hCapturedFIR, NBioAPI.Type.TIMEOUT.DEFAULT, null, null);
         APIServiceInstance._NBioAPI.CloseDevice(NBioAPI.Type.DEVICE_ID.AUTO);
+
         if (ret != NBioAPI.Error.NONE) return new BadRequestObjectResult(
             new JsonObject
             {
@@ -104,18 +107,19 @@ public class Biometric
             }
         );
 
-        NBioAPI.IndexSearch.CALLBACK_INFO_0 cbInfo = new();
-        APIServiceInstance._IndexSearch.IdentifyData(hCapturedFIR, NBioAPI.Type.FIR_SECURITY_LEVEL.NORMAL, out NBioAPI.IndexSearch.FP_INFO fpInfo, cbInfo);
+        // Obtém o FIR (Fingerprint Image Record) em formato de texto
+        APIServiceInstance._NBioAPI.GetTextFIRFromHandle(hCapturedFIR, out NBioAPI.Type.FIR_TEXTENCODE textFIR, true);
+
+        // O hash pode ser obtido diretamente do FIR ou de outras partes conforme necessário
+        string fingerprintHash = textFIR.TextFIR;
 
         return new OkObjectResult(
             new JsonObject
             {
-                ["message"] = fpInfo.ID != 0 ? "Fingerprint match found" : "Fingerprint match not found",
-                ["id"] = fpInfo.ID,
-                ["success"] = fpInfo.ID != 0
+                ["hash"] = fingerprintHash,
+                ["success"] = true
             }
         );
-
     }
 
     public IActionResult LoadToMemory(JsonArray fingers)
