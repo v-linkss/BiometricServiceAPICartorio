@@ -20,6 +20,12 @@ namespace BiometricService.Controllers
             return _biometric.CaptureHash();
         }
 
+        [HttpGet("run-scanner")]
+        public IActionResult RunScanner()
+        {
+            return _biometric.RunScannerApp(); // Chama o método para executar o scanner
+        }
+
         [HttpPost("match-one-on-one")]
         public IActionResult MatchOneOnOne([FromBody] JsonObject template)
         {
