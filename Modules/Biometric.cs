@@ -2,6 +2,8 @@ using BiometricService;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
+
 using NITGEN.SDK.NBioBSP;
 using System.Text.Json.Nodes;
 using static NITGEN.SDK.NBioBSP.NBioAPI.Export;
@@ -67,6 +69,35 @@ public class Biometric
         });
     }
 
+    public IActionResult RunScannerApp()
+    {
+        try
+        {
+            string scannerAppPath = @"c:\Windows\twain_32\escndv\escndv.exe";
+
+            Process process = new Process();
+            process.StartInfo.FileName = scannerAppPath;
+            process.StartInfo.UseShellExecute = true; 
+            process.Start();
+
+            process.WaitForExit();
+
+            if (process.ExitCode != 0)
+            {
+                return new OkObjectResult(new { message = "Scanner executado com sucesso", success = true });
+            }
+            else
+            {
+                return new BadRequestObjectResult(new { message = "Falha ao executar o scanner", success = false });
+            }
+        }
+        catch (Exception ex)
+        {
+            return new BadRequestObjectResult(new { message = ex.Message, success = false });
+        }
+    }
+
+
     public IActionResult IdentifyOneOnOne(JsonObject template)
     {
         var secondFir = new NBioAPI.Type.FIR_TEXTENCODE { TextFIR = template["template"]?.ToString() };
@@ -95,7 +126,6 @@ public class Biometric
     {
         APIServiceInstance._NBioAPI.OpenDevice(NBioAPI.Type.DEVICE_ID.AUTO);
 
-        // Captura a impressão digital
         uint ret = APIServiceInstance._NBioAPI.Capture(NBioAPI.Type.FIR_PURPOSE.VERIFY, out NBioAPI.Type.HFIR hCapturedFIR, NBioAPI.Type.TIMEOUT.DEFAULT, null, null);
         APIServiceInstance._NBioAPI.CloseDevice(NBioAPI.Type.DEVICE_ID.AUTO);
 
@@ -107,10 +137,8 @@ public class Biometric
             }
         );
 
-        // Obtém o FIR (Fingerprint Image Record) em formato de texto
         APIServiceInstance._NBioAPI.GetTextFIRFromHandle(hCapturedFIR, out NBioAPI.Type.FIR_TEXTENCODE textFIR, true);
 
-        // O hash pode ser obtido diretamente do FIR ou de outras partes conforme necessário
         string fingerprintHash = textFIR.TextFIR;
 
         return new OkObjectResult(
