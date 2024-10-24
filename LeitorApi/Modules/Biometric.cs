@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
-
 using NITGEN.SDK.NBioBSP;
 using System.Text.Json.Nodes;
 using static NITGEN.SDK.NBioBSP.NBioAPI.Export;
@@ -68,12 +67,13 @@ public class Biometric
             ["success"] = true,
         });
     }
-
+    
     public IActionResult RunScannerApp()
     {
         try
         {
-            string scannerAppPath = @"c:\Windows\twain_32\escndv\escndv.exe";
+            string relativePath = Path.Combine(Directory.GetCurrentDirectory(), @"..\ScannerAPP\TestApp\bin\Debug\TestApp.exe");
+            string scannerAppPath = Path.GetFullPath(relativePath); // Obter o caminho absoluto
 
             Process process = new Process();
             process.StartInfo.FileName = scannerAppPath;
@@ -96,32 +96,6 @@ public class Biometric
             return new BadRequestObjectResult(new { message = ex.Message, success = false });
         }
     }
-
-
-    public IActionResult IdentifyOneOnOne(JsonObject template)
-    {
-        var secondFir = new NBioAPI.Type.FIR_TEXTENCODE { TextFIR = template["template"]?.ToString() };
-
-        APIServiceInstance._NBioAPI.OpenDevice(NBioAPI.Type.DEVICE_ID.AUTO);
-        uint ret = APIServiceInstance._NBioAPI.Verify(secondFir, out bool matched, null);
-        APIServiceInstance._NBioAPI.CloseDevice(NBioAPI.Type.DEVICE_ID.AUTO);
-        if (ret != NBioAPI.Error.NONE) return new BadRequestObjectResult(
-            new JsonObject
-            {
-                ["message"] = ret == NBioAPI.Error.CAPTURE_TIMEOUT ? "Timeout" : $"Error on Verify: {ret}",
-                ["success"] = false
-            }
-        );
-
-        return new OkObjectResult(
-            new JsonObject
-            {
-                ["message"] = matched ? "Fingerprint matches" : "Fingerprint doesnt match",
-                ["success"] = matched
-            }
-        );
-    }
-
     public IActionResult CaptureFinger()
     {
         APIServiceInstance._NBioAPI.OpenDevice(NBioAPI.Type.DEVICE_ID.AUTO);
@@ -150,67 +124,6 @@ public class Biometric
         );
     }
 
-    public IActionResult LoadToMemory(JsonArray fingers)
-    {
-        if (fingers.Count == 0)
-        {
-            return new BadRequestObjectResult(
-                new JsonObject
-                {
-                    ["message"] = "No templates to load",
-                    ["success"] = false
-                }
-            );
-        }
-
-        uint ret;
-        var textFir = new NBioAPI.Type.FIR_TEXTENCODE();
-        foreach (JsonObject fingerObject in fingers)
-        {
-            textFir.TextFIR = fingerObject["template"].ToString();
-            ret = APIServiceInstance._IndexSearch.AddFIR(textFir, (uint)fingerObject["id"], out _);
-            if (ret != NBioAPI.Error.NONE) return new BadRequestObjectResult(
-                new JsonObject
-                {
-                    ["message"] = $"Error on AddFIR: {ret}",
-                    ["success"] = false
-                }
-            );
-        }
-
-        return new OkObjectResult(
-            new JsonObject
-            {
-                ["message"] = "Templates loaded to memory",
-                ["success"] = true
-            }
-        );
-    }
-
-    public IActionResult DeleteAllFromMemory()
-    {
-        APIServiceInstance._IndexSearch.ClearDB();
-        return new OkObjectResult(
-            new JsonObject
-            {
-                ["message"] = "All templates deleted from memory",
-                ["success"] = true
-            }
-        );
-    }
-
-    public IActionResult TotalIdsInMemory()
-    {
-        APIServiceInstance._IndexSearch.GetDataCount(out UInt32 dataCount);
-        return new OkObjectResult(
-            new JsonObject
-            {
-                ["total"] = dataCount,
-                ["success"] = true
-            }
-        );
-    }
-
     public IActionResult DeviceUniqueSerialID()
     {
         APIServiceInstance._NBioAPI.OpenDevice(NBioAPI.Type.DEVICE_ID.AUTO);
@@ -226,39 +139,5 @@ public class Biometric
         );
     }
 
-    public IActionResult JoinTemplates(JsonArray fingers)
-    {
-        if (fingers.Count < 2) return new BadRequestObjectResult(
-                                   new JsonObject
-                                   {
-                                       ["message"] = "No templates to join",
-                                       ["success"] = false
-                                   });
-
-        List<string> list = [];
-        list.AddRange(fingers.Select(fingerObject => fingerObject["template"].ToString()));
-
-        NBioAPI.Type.FIR_PAYLOAD payload = new NBioAPI.Type.FIR_PAYLOAD();
-        for (int i = 1; i < fingers.Count; i++)
-        {
-            NBioAPI.Type.FIR_TEXTENCODE textFIR1 = new NBioAPI.Type.FIR_TEXTENCODE() { TextFIR = list[i - 1] };
-            NBioAPI.Type.FIR_TEXTENCODE textFIR2 = new NBioAPI.Type.FIR_TEXTENCODE() { TextFIR = list[i] };
-            APIServiceInstance._NBioAPI.CreateTemplate(textFIR1, textFIR2, out NBioAPI.Type.HFIR hNew, payload);
-            uint ret = APIServiceInstance._NBioAPI.GetTextFIRFromHandle(hNew, out NBioAPI.Type.FIR_TEXTENCODE newTextFIR, true);
-            if (ret != NBioAPI.Error.NONE) return new BadRequestObjectResult(
-                                   new JsonObject
-                                   {
-                                       ["message"] = $"Error creating template: {ret}",
-                                       ["success"] = false
-                                   });
-            list[i] = newTextFIR.TextFIR;
-        }
-        return new OkObjectResult(
-            new JsonObject
-            {
-                ["template"] = list[fingers.Count - 1],
-                ["message"] = $"Templates joined successfully",
-                ["success"] = true
-            });
-    }
+    
 }

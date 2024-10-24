@@ -17,6 +17,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0-rc.2.23479.6" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="7.0.1" />
+    <PackageReference Include="NTwain" Version="3.7.5" />
+    <PackageReference Include="TwainDotNet" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>

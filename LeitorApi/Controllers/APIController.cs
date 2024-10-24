@@ -26,35 +26,11 @@ namespace BiometricService.Controllers
             return _biometric.RunScannerApp(); // Chama o método para executar o scanner
         }
 
-        [HttpPost("match-one-on-one")]
-        public IActionResult MatchOneOnOne([FromBody] JsonObject template)
-        {
-            return _biometric.IdentifyOneOnOne(template);
-        }
-
         [HttpGet("capture-finger")]
         public IActionResult CaptureFinger()
         {
             return _biometric.CaptureFinger();
-        }
-
-        [HttpPost("load-to-memory")]
-        public IActionResult LoadToMemory([FromBody] JsonArray fingers)
-        {
-            return _biometric.LoadToMemory(fingers);
-        }
-
-        [HttpGet("delete-all-from-memory")]
-        public IActionResult DeleteAllFromMemory()
-        {
-            return _biometric.DeleteAllFromMemory();
-        }
-
-        [HttpGet("total-in-memory")]
-        public IActionResult TotalIdsInMemory()
-        {
-            return _biometric.TotalIdsInMemory();
-        }
+        }  
 
         [HttpGet("device-unique-id")]
         public IActionResult DeviceUniqueSerialID()
@@ -62,10 +38,5 @@ namespace BiometricService.Controllers
             return _biometric.DeviceUniqueSerialID();
         }
 
-        [HttpPost("join-templates")]
-        public IActionResult JoinTemplates([FromBody] JsonArray fingers)
-        {
-            return _biometric.JoinTemplates(fingers);
-        }
     }
 }
