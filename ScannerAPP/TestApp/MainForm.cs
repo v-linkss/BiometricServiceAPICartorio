@@ -26,16 +26,39 @@ namespace TestApp
             InitializeComponent();
 
             _twain = new Twain(new WinFormsWindowMessageHook(this));
-            _twain.TransferImage += delegate(Object sender, TransferImageEventArgs args)
+            _twain.TransferImage += delegate (Object sender, TransferImageEventArgs args)
             {
                 if (args.Image != null)
                 {
-                    pictureBox1.Image = args.Image;
+                    // Limites máximos
+                    const int maxWidth = 1980;
+                    const int maxHeight = 1080;
 
-                    widthLabel.Text = "Width: " + pictureBox1.Image.Width;
-                    heightLabel.Text = "Height: " + pictureBox1.Image.Height;
+                    // Calculando a nova largura e altura mantendo a proporção
+                    int newWidth = args.Image.Width;
+                    int newHeight = args.Image.Height;
+
+                    if (newWidth > maxWidth || newHeight > maxHeight)
+                    {
+                        float widthRatio = (float)maxWidth / newWidth;
+                        float heightRatio = (float)maxHeight / newHeight;
+                        float ratio = Math.Min(widthRatio, heightRatio);
+
+                        newWidth = (int)(newWidth * ratio);
+                        newHeight = (int)(newHeight * ratio);
+                    }
+
+                    // Redimensionando a imagem
+                    var resizedImage = new Bitmap(args.Image, new Size(newWidth, newHeight));
+
+                    // Atualizando o PictureBox e as labels
+                    pictureBox1.Image = resizedImage;
+
+                    widthLabel.Text = "Width: " + resizedImage.Width;
+                    heightLabel.Text = "Height: " + resizedImage.Height;
                 }
             };
+
             _twain.ScanningComplete += delegate
             {
                 Enabled = true;
@@ -56,9 +79,6 @@ namespace TestApp
             _settings.ShowTwainUI = useUICheckBox.Checked;
             _settings.ShowProgressIndicatorUI = showProgressIndicatorUICheckBox.Checked;
             _settings.UseDuplex = useDuplexCheckBox.Checked;
-            _settings.Resolution =
-                blackAndWhiteCheckBox.Checked
-                ? ResolutionSettings.Fax : ResolutionSettings.ColourPhotocopier;
             _settings.Area = !checkBoxArea.Checked ? null : AreaSettings;
             _settings.ShouldTransferAllPages = true;
 
@@ -83,14 +103,39 @@ namespace TestApp
         {
             if (pictureBox1.Image != null)
             {
-                SaveFileDialog sfd = new SaveFileDialog();
-
-                if (sfd.ShowDialog() == DialogResult.OK)
+                using (SaveFileDialog sfd = new SaveFileDialog())
                 {
-                    pictureBox1.Image.Save(sfd.FileName);
+                    // Configurando o filtro para tipos de arquivos
+                    sfd.Filter = "PNG Image|*.png|JPEG Image|*.jpg;*.jpeg|Bitmap Image|*.bmp|All Files|*.*";
+                    sfd.Title = "Save an Image File";
+                    sfd.DefaultExt = "png"; // Define a extensão padrão como PNG
+                    sfd.AddExtension = true; // Adiciona automaticamente a extensão ao salvar
+
+                    if (sfd.ShowDialog() == DialogResult.OK)
+                    {
+                        // Salvar a imagem de acordo com o formato escolhido
+                        switch (Path.GetExtension(sfd.FileName).ToLower())
+                        {
+                            case ".png":
+                                pictureBox1.Image.Save(sfd.FileName, System.Drawing.Imaging.ImageFormat.Png);
+                                break;
+                            case ".jpg":
+                            case ".jpeg":
+                                pictureBox1.Image.Save(sfd.FileName, System.Drawing.Imaging.ImageFormat.Jpeg);
+                                break;
+                            case ".bmp":
+                                pictureBox1.Image.Save(sfd.FileName, System.Drawing.Imaging.ImageFormat.Bmp);
+                                break;
+                            default:
+                                // Se não for um formato suportado, você pode adicionar um aviso ou tratamento de erro
+                                MessageBox.Show("Formato de arquivo não suportado.");
+                                break;
+                        }
+                    }
                 }
             }
         }
+
 
         private void diagnostics_Click(object sender, EventArgs e)
         {
