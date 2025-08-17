@@ -38,5 +38,7 @@ namespace BiometricService.Controllers
             return _biometric.DeviceUniqueSerialID();
         }
 
+        
+
     }
 }

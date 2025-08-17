@@ -1,0 +1,6 @@
+@uploadObserver_HostAddress = http://localhost:5231
+
+GET {{uploadObserver_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

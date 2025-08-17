@@ -1,0 +1,306 @@
+### Scanner API - Testes Completos
+### Base URL: http://localhost:5000
+
+### ========================================
+### 1. TESTES BÁSICOS
+### ========================================
+
+### Obter fontes de scanner disponíveis
+GET {{baseUrl}}/api/scanner/sources
+Content-Type: application/json
+
+### Testar conexão com scanner
+GET {{baseUrl}}/api/scanner/test-connection/Default%20Scanner
+Content-Type: application/json
+
+### Hello World (teste básico)
+GET {{baseUrl}}/api/helloworld
+
+### ========================================
+### 2. DIGITALIZAÇÃO DE PÁGINA ÚNICA
+### ========================================
+
+### Digitalizar como PDF (configuração básica)
+POST {{baseUrl}}/api/scanner/scan
+Content-Type: application/json
+
+{
+  "sourceName": "Default Scanner",
+  "outputFormat": "PDF",
+  "outputFileName": "documento_basico"
+}
+
+### Digitalizar como PDF (configuração completa)
+POST {{baseUrl}}/api/scanner/scan
+Content-Type: application/json
+
+{
+  "sourceName": "Default Scanner",
+  "useDocumentFeeder": false,
+  "showTwainUI": true,
+  "showProgressIndicatorUI": true,
+  "useDuplex": false,
+  "automaticRotate": true,
+  "automaticBorderDetection": true,
+  "resolution": 300,
+  "outputFormat": "PDF",
+  "outputFileName": "documento_completo"
+}
+
+### Digitalizar como JPEG
+POST {{baseUrl}}/api/scanner/scan
+Content-Type: application/json
+
+{
+  "sourceName": "Default Scanner",
+  "outputFormat": "JPEG",
+  "outputFileName": "imagem_jpeg",
+  "resolution": 300
+}
+
+### Digitalizar como PNG
+POST {{baseUrl}}/api/scanner/scan
+Content-Type: application/json
+
+{
+  "sourceName": "Default Scanner",
+  "outputFormat": "PNG",
+  "outputFileName": "imagem_png",
+  "resolution": 300
+}
+
+### Digitalizar como TIFF
+POST {{baseUrl}}/api/scanner/scan
+Content-Type: application/json
+
+{
+  "sourceName": "Default Scanner",
+  "outputFormat": "TIFF",
+  "outputFileName": "imagem_tiff",
+  "resolution": 300
+}
+
+### ========================================
+### 3. DIGITALIZAÇÃO DE MÚLTIPLAS PÁGINAS
+### ========================================
+
+### Digitalizar múltiplas páginas como PDF
+POST {{baseUrl}}/api/scanner/scan-multipage
+Content-Type: application/json
+
+{
+  "sourceName": "Default Scanner",
+  "useDocumentFeeder": true,
+  "showTwainUI": true,
+  "showProgressIndicatorUI": true,
+  "useDuplex": false,
+  "automaticRotate": true,
+  "automaticBorderDetection": true,
+  "resolution": 300,
+  "outputFormat": "PDF",
+  "outputFileName": "relatorio_multipagina"
+}
+
+### Digitalizar múltiplas páginas em alta resolução
+POST {{baseUrl}}/api/scanner/scan-multipage
+Content-Type: application/json
+
+{
+  "sourceName": "Default Scanner",
+  "useDocumentFeeder": true,
+  "outputFormat": "PDF",
+  "outputFileName": "documento_alta_qualidade",
+  "resolution": 600
+}
+
+### ========================================
+### 4. TESTES DE DIFERENTES RESOLUÇÕES
+### ========================================
+
+### Baixa resolução (150 DPI)
+POST {{baseUrl}}/api/scanner/scan
+Content-Type: application/json
+
+{
+  "sourceName": "Default Scanner",
+  "outputFormat": "PDF",
+  "outputFileName": "documento_150dpi",
+  "resolution": 150
+}
+
+### Resolução padrão (300 DPI)
+POST {{baseUrl}}/api/scanner/scan
+Content-Type: application/json
+
+{
+  "sourceName": "Default Scanner",
+  "outputFormat": "PDF",
+  "outputFileName": "documento_300dpi",
+  "resolution": 300
+}
+
+### Alta resolução (600 DPI)
+POST {{baseUrl}}/api/scanner/scan
+Content-Type: application/json
+
+{
+  "sourceName": "Default Scanner",
+  "outputFormat": "PDF",
+  "outputFileName": "documento_600dpi",
+  "resolution": 600
+}
+
+### ========================================
+### 5. TESTES DE CONFIGURAÇÕES ESPECIAIS
+### ========================================
+
+### Com alimentador automático
+POST {{baseUrl}}/api/scanner/scan
+Content-Type: application/json
+
+{
+  "sourceName": "Default Scanner",
+  "outputFormat": "PDF",
+  "outputFileName": "documento_adf",
+  "useDocumentFeeder": true
+}
+
+### Sem interface Twain
+POST {{baseUrl}}/api/scanner/scan
+Content-Type: application/json
+
+{
+  "sourceName": "Default Scanner",
+  "outputFormat": "PDF",
+  "outputFileName": "documento_sem_ui",
+  "showTwainUI": false,
+  "showProgressIndicatorUI": false
+}
+
+### ========================================
+### 6. DOWNLOAD E MANIPULAÇÃO DE ARQUIVOS
+### ========================================
+
+### Baixar documento PDF (substitua pelo caminho real)
+GET {{baseUrl}}/api/scanner/document/ScannedDocuments/documento_basico.pdf
+Content-Type: application/pdf
+
+### Baixar documento JPEG
+GET {{baseUrl}}/api/scanner/document/ScannedDocuments/imagem_jpeg.jpg
+Content-Type: image/jpeg
+
+### Baixar documento PNG
+GET {{baseUrl}}/api/scanner/document/ScannedDocuments/imagem_png.png
+Content-Type: image/png
+
+### ========================================
+### 7. EXCLUSÃO DE ARQUIVOS
+### ========================================
+
+### Deletar documento PDF
+DELETE {{baseUrl}}/api/scanner/document/ScannedDocuments/documento_basico.pdf
+Content-Type: application/json
+
+### Deletar documento JPEG
+DELETE {{baseUrl}}/api/scanner/document/ScannedDocuments/imagem_jpeg.jpg
+Content-Type: application/json
+
+### ========================================
+### 8. TESTES DE VALIDAÇÃO
+### ========================================
+
+### Teste com parâmetros inválidos (sem sourceName)
+POST {{baseUrl}}/api/scanner/scan
+Content-Type: application/json
+
+{
+  "outputFormat": "PDF"
+}
+
+### Teste com formato inválido
+POST {{baseUrl}}/api/scanner/scan
+Content-Type: application/json
+
+{
+  "sourceName": "Default Scanner",
+  "outputFormat": "INVALID_FORMAT"
+}
+
+### Teste com resolução inválida
+POST {{baseUrl}}/api/scanner/scan
+Content-Type: application/json
+
+{
+  "sourceName": "Default Scanner",
+  "outputFormat": "PDF",
+  "resolution": 999
+}
+
+### ========================================
+### 9. TESTES DE PERFORMANCE
+### ========================================
+
+### Múltiplas requisições simultâneas (simular carga)
+POST {{baseUrl}}/api/scanner/scan
+Content-Type: application/json
+
+{
+  "sourceName": "Default Scanner",
+  "outputFormat": "PDF",
+  "outputFileName": "teste_performance_1"
+}
+
+POST {{baseUrl}}/api/scanner/scan
+Content-Type: application/json
+
+{
+  "sourceName": "Default Scanner",
+  "outputFormat": "PDF",
+  "outputFileName": "teste_performance_2"
+}
+
+POST {{baseUrl}}/api/scanner/scan
+Content-Type: application/json
+
+{
+  "sourceName": "Default Scanner",
+  "outputFormat": "PDF",
+  "outputFileName": "teste_performance_3"
+}
+
+### ========================================
+### 10. TESTES DE INTEGRAÇÃO
+### ========================================
+
+### Fluxo completo: Digitalizar -> Baixar -> Deletar
+# 1. Digitalizar documento
+POST {{baseUrl}}/api/scanner/scan
+Content-Type: application/json
+
+{
+  "sourceName": "Default Scanner",
+  "outputFormat": "PDF",
+  "outputFileName": "teste_integracao"
+}
+
+# 2. Baixar documento (execute após o passo 1)
+GET {{baseUrl}}/api/scanner/document/ScannedDocuments/teste_integracao.pdf
+
+# 3. Deletar documento (execute após o passo 2)
+DELETE {{baseUrl}}/api/scanner/document/ScannedDocuments/teste_integracao.pdf
+
+### ========================================
+### VARIÁVEIS DE AMBIENTE
+### ========================================
+
+@baseUrl = http://localhost:5000
+
+### ========================================
+### INSTRUÇÕES DE USO
+### ========================================
+
+### 1. Execute os testes na ordem sugerida
+### 2. Para testes de integração, execute os passos sequencialmente
+### 3. Verifique os logs da aplicação para debug
+### 4. Os arquivos são salvos em ScannedDocuments/
+### 5. Use o Swagger UI em http://localhost:5000 para documentação interativa

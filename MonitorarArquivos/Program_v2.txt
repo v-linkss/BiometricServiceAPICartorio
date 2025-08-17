@@ -1,0 +1,73 @@
+﻿// using Microsoft.AspNetCore.Mvc;
+// using System;
+// using System.IO;
+// using System.Net.Http;
+// using System.Threading.Tasks;
+
+// [ApiController]
+// [Route("api/[controller]")]
+// public class UploadObserverController : ControllerBase
+// {
+//     [HttpPost]
+//     public async Task<IActionResult> Observe([FromBody] UploadObserverRequest request)
+//     {
+//         // Define o caminho do diretório monitorado
+//         string pastaMonitorada = request.PastaMonitorada;
+
+//         // Define o tempo de observação (1 minuto)
+//         int tempoObservacao = 1 * 60 * 1000; // 1 minuto em milissegundos
+
+//         // Cria um novo FileSystemWatcher
+//         using var fsw = new FileSystemWatcher(pastaMonitorada);
+
+//         // Define o evento que será disparado quando um arquivo é criado
+//         fsw.Created += new FileSystemEventHandler(ArquivoCriado);
+
+//         // Inicia a monitoração da pasta
+//         fsw.EnableRaisingEvents = true;
+
+//         // Aguarda por um minuto ou até o upload ser realizado
+//         await Task.Delay(tempoObservacao);
+
+//         // Desabilita a monitoração da pasta
+//         fsw.EnableRaisingEvents = false;
+
+//         return Ok("Observação concluída");
+//     }
+
+//     private void ArquivoCriado(object sender, FileSystemEventArgs e)
+//     {
+//         // Define os campos do formulário de dados
+//         string pessoaToken = "EYIuZ";
+//         string bucket = "1-cartorio";
+//         string tipo = "ficha";
+
+//         // Cria um novo formulário de dados
+//         var formData = new MultipartFormDataContent();
+//         formData.Add(new StreamContent(File.OpenRead(e.FullPath)), "file", e.Name);
+//         formData.Add(new StringContent(pessoaToken), "pessoa_token");
+//         formData.Add(new StringContent(bucket), "bucket");
+//         formData.Add(new StringContent(tipo), "tipo");
+
+//         // Cria um novo cliente HTTP
+//         var httpClient = new HttpClient();
+
+//         // Envia a requisição HTTP para o endpoint
+//         var response = httpClient.PostAsync("http://localhost:5982/upload", formData).Result;
+
+//         // Verifica se a requisição foi bem-sucedida
+//         if (response.IsSuccessStatusCode)
+//         {
+//             Console.WriteLine("Arquivo enviado com sucesso!");
+//         }
+//         else
+//         {
+//             Console.WriteLine("Erro ao enviar arquivo: " + response.StatusCode);
+//         }
+//     }
+// }
+
+// public class UploadObserverRequest
+// {
+//     public string PastaMonitorada { get; set; }
+// }
