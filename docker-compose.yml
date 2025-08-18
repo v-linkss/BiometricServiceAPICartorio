@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  scanner-api:
+    build:
+      context: ./HelloWorldApi
+      dockerfile: Dockerfile
+    ports:
+      - "5000:80"
+      - "5001:443"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80;https://+:443
+    volumes:
+      - ./HelloWorldApi/ScannedDocuments:/app/ScannedDocuments
+      - ./HelloWorldApi/tmp:/app/tmp
+    restart: unless-stopped
+    networks:
+      - scanner-network
+
+networks:
+  scanner-network:
+    driver: bridge
+
+volumes:
+  scanned-documents:
+    driver: local
+  temp-files:
+    driver: local

@@ -1,19 +1,30 @@
 #!/bin/bash
 
-# Script para compilar e executar o Scanner API
+# Script para compilar e executar o Scanner API (.NET 8)
 # Autor: Sistema de Cartório
 # Data: $(date)
 
-echo "🚀 Iniciando build e execução do Scanner API..."
+echo "🚀 Iniciando build e execução do Scanner API (.NET 8)..."
 echo "=================================================="
 
-# Verificar se o .NET está instalado
+# Verificar se o .NET 8 está instalado
 if ! command -v dotnet &> /dev/null; then
     echo "❌ .NET SDK não encontrado. Por favor, instale o .NET 8.0 ou superior."
     exit 1
 fi
 
-echo "✅ .NET SDK encontrado: $(dotnet --version)"
+# Verificar versão do .NET
+DOTNET_VERSION=$(dotnet --version)
+echo "✅ .NET SDK encontrado: $DOTNET_VERSION"
+
+# Verificar se é .NET 8 ou superior
+if [[ ! "$DOTNET_VERSION" =~ ^8\. ]]; then
+    echo "❌ Versão do .NET deve ser 8.0 ou superior. Versão atual: $DOTNET_VERSION"
+    echo "💡 Execute: wget -q -O - https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -"
+    echo "💡 Execute: sudo apt-add-repository 'deb [arch=amd64] https://packages.microsoft.com/repos/microsoft-ubuntu-$(lsb_release -cs)-prod $(lsb_release -cs) main'"
+    echo "💡 Execute: sudo apt-get update && sudo apt-get install -y dotnet-sdk-8.0"
+    exit 1
+fi
 
 # Navegar para o diretório do projeto
 cd HelloWorldApi
@@ -56,6 +67,7 @@ fi
 echo "🚀 Executando a aplicação..."
 echo "📖 Documentação disponível em: http://localhost:5000"
 echo "🔌 API disponível em: http://localhost:5000/api"
+echo "🏥 Health check: http://localhost:5000/health"
 echo "⏹️  Pressione Ctrl+C para parar"
 
 dotnet run --urls "http://localhost:5000"

@@ -1,11 +1,9 @@
 using HelloWorldApi.Interface;
 using HelloWorldApi.Models;
-using iTextSharp.text;
-using iTextSharp.text.pdf;
-using System.Drawing;
-using System.Drawing.Imaging;
-using TwainDotNet;
-using TwainDotNet.TwainNative;
+using iText.Kernel.Pdf;
+using iText.Layout;
+using iText.Layout.Element;
+using iText.Layout.Properties;
 
 namespace HelloWorldApi.Services
 {
@@ -44,7 +42,7 @@ namespace HelloWorldApi.Services
                     SupportsDocumentFeeder = true,
                     SupportsDuplex = false,
                     MaxResolution = 600,
-                    SupportedFormats = new[] { "PDF", "JPEG", "PNG", "TIFF" }
+                    SupportedFormats = new[] { "PDF" }
                 });
 
                 return await Task.FromResult(sources);
@@ -62,22 +60,17 @@ namespace HelloWorldApi.Services
             {
                 _logger.LogInformation("Iniciando digitalização de documento");
                 
-                // Simular digitalização (em produção, usar TwainDotNet)
+                // Forçar formato PDF para evitar problemas de compatibilidade
+                request.OutputFormat = "PDF";
+                
                 var fileName = string.IsNullOrEmpty(request.OutputFileName) 
                     ? $"scan_{DateTime.Now:yyyyMMdd_HHmmss}" 
                     : request.OutputFileName;
                 
-                var filePath = Path.Combine(_outputDirectory, $"{fileName}.{request.OutputFormat.ToLower()}");
+                var filePath = Path.Combine(_outputDirectory, $"{fileName}.pdf");
                 
                 // Criar um documento de exemplo (em produção, seria a imagem real do scanner)
-                if (request.OutputFormat.ToUpper() == "PDF")
-                {
-                    await CreateSamplePdfAsync(filePath, 1);
-                }
-                else
-                {
-                    await CreateSampleImageAsync(filePath, request.OutputFormat);
-                }
+                await CreateSamplePdfAsync(filePath, 1);
 
                 var fileInfo = new FileInfo(filePath);
                 
@@ -89,7 +82,7 @@ namespace HelloWorldApi.Services
                     FileName = Path.GetFileName(filePath),
                     FileSize = fileInfo.Length,
                     PageCount = 1,
-                    OutputFormat = request.OutputFormat,
+                    OutputFormat = "PDF",
                     ScanDateTime = DateTime.Now
                 };
 
@@ -113,23 +106,19 @@ namespace HelloWorldApi.Services
             {
                 _logger.LogInformation("Iniciando digitalização de múltiplas páginas");
                 
+                // Forçar formato PDF para evitar problemas de compatibilidade
+                request.OutputFormat = "PDF";
+                
                 var fileName = string.IsNullOrEmpty(request.OutputFileName) 
                     ? $"multipage_scan_{DateTime.Now:yyyyMMdd_HHmmss}" 
                     : request.OutputFileName;
                 
-                var filePath = Path.Combine(_outputDirectory, $"{fileName}.{request.OutputFormat.ToLower()}");
+                var filePath = Path.Combine(_outputDirectory, $"{fileName}.pdf");
                 
                 // Simular digitalização de múltiplas páginas
                 int pageCount = request.UseDocumentFeeder ? 3 : 2; // Simular 2-3 páginas
                 
-                if (request.OutputFormat.ToUpper() == "PDF")
-                {
-                    await CreateSamplePdfAsync(filePath, pageCount);
-                }
-                else
-                {
-                    await CreateSampleMultiPageImageAsync(filePath, request.OutputFormat, pageCount);
-                }
+                await CreateSamplePdfAsync(filePath, pageCount);
 
                 var fileInfo = new FileInfo(filePath);
                 
@@ -141,7 +130,7 @@ namespace HelloWorldApi.Services
                     FileName = Path.GetFileName(filePath),
                     FileSize = fileInfo.Length,
                     PageCount = pageCount,
-                    OutputFormat = request.OutputFormat,
+                    OutputFormat = "PDF",
                     ScanDateTime = DateTime.Now
                 };
 
@@ -213,66 +202,33 @@ namespace HelloWorldApi.Services
 
         private async Task CreateSamplePdfAsync(string filePath, int pageCount)
         {
-            using var document = new Document(PageSize.A4);
-            using var writer = PdfWriter.GetInstance(document, new FileStream(filePath, FileMode.Create));
-            
-            document.Open();
+            using var writer = new PdfWriter(filePath);
+            using var pdf = new PdfDocument(writer);
+            using var document = new Document(pdf);
             
             for (int i = 1; i <= pageCount; i++)
             {
-                document.Add(new Paragraph($"Página {i} - Documento Digitalizado"));
-                document.Add(new Paragraph($"Data: {DateTime.Now:dd/MM/yyyy HH:mm:ss}"));
-                document.Add(new Paragraph("Este é um documento de exemplo gerado pelo sistema de scanner."));
+                document.Add(new Paragraph($"Página {i} - Documento Digitalizado")
+                    .SetFontSize(20)
+                    .SetBold());
+                
+                document.Add(new Paragraph($"Data: {DateTime.Now:dd/MM/yyyy HH:mm:ss}")
+                    .SetFontSize(12));
+                
+                document.Add(new Paragraph("Este é um documento de exemplo gerado pelo sistema de scanner.")
+                    .SetFontSize(12));
+                
+                document.Add(new Paragraph($"Resolução: {300} DPI")
+                    .SetFontSize(10)
+                    .SetItalic());
                 
                 if (i < pageCount)
                 {
-                    document.NewPage();
+                    document.Add(new AreaBreak());
                 }
             }
             
-            document.Close();
             await Task.CompletedTask;
-        }
-
-        private async Task CreateSampleImageAsync(string filePath, string format)
-        {
-            using var bitmap = new Bitmap(800, 600);
-            using var graphics = Graphics.FromImage(bitmap);
-            
-            graphics.Clear(Color.White);
-            graphics.DrawString("Documento Digitalizado", new System.Drawing.Font("Arial", 24), Brushes.Black, 50, 50);
-            graphics.DrawString($"Data: {DateTime.Now:dd/MM/yyyy HH:mm:ss}", new System.Drawing.Font("Arial", 12), Brushes.Black, 50, 100);
-            graphics.DrawString("Este é um documento de exemplo", new System.Drawing.Font("Arial", 12), Brushes.Black, 50, 150);
-
-            ImageFormat imageFormat = format.ToUpper() switch
-            {
-                "JPEG" => ImageFormat.Jpeg,
-                "PNG" => ImageFormat.Png,
-                "TIFF" => ImageFormat.Tiff,
-                _ => ImageFormat.Png
-            };
-
-            bitmap.Save(filePath, imageFormat);
-            await Task.CompletedTask;
-        }
-
-        private async Task CreateSampleMultiPageImageAsync(string filePath, string format, int pageCount)
-        {
-            if (format.ToUpper() == "TIFF")
-            {
-                await CreateMultiPageTiffAsync(filePath, pageCount);
-            }
-            else
-            {
-                // Para outros formatos, criar apenas uma imagem
-                await CreateSampleImageAsync(filePath, format);
-            }
-        }
-
-        private Task CreateMultiPageTiffAsync(string filePath, int pageCount)
-        {
-            // Implementar criação de TIFF multi-página se necessário
-            return CreateSampleImageAsync(filePath, "PNG");
         }
     }
 }
