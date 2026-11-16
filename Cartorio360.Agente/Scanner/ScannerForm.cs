@@ -26,6 +26,7 @@ public class ScannerForm : Form
     private readonly Button _escanear;
     private readonly Button _selecionarScanner;
     private readonly Label _carregando;
+    private readonly Label _dispositivo;
     private readonly PictureBox _previa;
 
     private readonly FormatoDigitalizacao _formato;
@@ -93,6 +94,19 @@ public class ScannerForm : Form
         _selecionarScanner.Click += SelecionarScanner_Click;
         painel.Controls.Add(_selecionarScanner);
 
+        // Adicionado depois do botao: no Dock=Top o ultimo controle adicionado
+        // fica no topo, ou seja, o label aparece acima de "Selecionar Scanner".
+        _dispositivo = new Label
+        {
+            Dock = DockStyle.Top,
+            Height = 40,
+            AutoEllipsis = true,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Font = new Font(Font, FontStyle.Bold)
+        };
+        painel.Controls.Add(_dispositivo);
+        AtualizarDispositivo();
+
         Controls.Add(painel);
 
         _previa = new PictureBox
@@ -135,12 +149,23 @@ public class ScannerForm : Form
         catch { return ""; }
     }
 
+    /// <summary>Mostra qual dispositivo vai digitalizar, ou que nao ha nenhum.</summary>
+    private void AtualizarDispositivo()
+    {
+        var nome = _scanner == null ? "" : NomeDoScanner(_scanner);
+        _dispositivo.Text = _scanner == null
+            ? "Nenhum dispositivo disponível"
+            : $"Dispositivo: {(nome.Length > 0 ? nome : "scanner sem nome")}";
+        _dispositivo.ForeColor = _scanner == null ? Color.Firebrick : SystemColors.ControlText;
+    }
+
     private void SelecionarScanner_Click(object? sender, EventArgs e)
     {
         using var selecao = new ScannerSelectionForm();
         if (selecao.ShowDialog(this) != DialogResult.OK || selecao.SelectedScanner == null) return;
 
         _scanner = selecao.SelectedScanner;
+        AtualizarDispositivo();
         MessageBox.Show(this, $"Scanner selecionado: {NomeDoScanner(_scanner)}");
     }
 
